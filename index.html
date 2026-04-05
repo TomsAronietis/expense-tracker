@@ -415,4 +415,76 @@ function delRec(freq, id) { data.recurring[freq] = data.recurring[freq].filter(r
 })();
 </script>
 </body>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shared Expense Tracker</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header>
+        <h1>Expense Tracker (Shared DB)</h1>
+        <p class="hint">Optimistic updates + DB source of truth</p>
+      </header>
+
+      <section class="panel">
+        <h2>Configuration</h2>
+        <p>
+          Set your Supabase credentials in <code>app.js</code>.
+          Current user id is stored in <code>APP_USER_ID</code>.
+        </p>
+      </section>
+
+      <section class="panel">
+        <h2>Income Entries</h2>
+        <form id="income-form" class="grid-form">
+          <input name="month_key" placeholder="month_key (YYYY-MM)" required />
+          <input name="name" placeholder="name" required />
+          <input name="amount" type="number" step="0.01" placeholder="amount" required />
+          <input name="status" placeholder="status" value="planned" required />
+          <input name="origin_id" placeholder="origin_id" />
+          <input name="rolled_from" placeholder="rolled_from" />
+          <button type="submit">Add income</button>
+        </form>
+        <ul id="income-list"></ul>
+      </section>
+
+      <section class="panel">
+        <h2>Expense Entries</h2>
+        <form id="expense-form" class="grid-form">
+          <input name="month_key" placeholder="month_key (YYYY-MM)" required />
+          <input name="name" placeholder="name" required />
+          <input name="amount" type="number" step="0.01" placeholder="amount" required />
+          <input name="category" placeholder="category" required />
+          <button type="submit">Add expense</button>
+        </form>
+        <ul id="expense-list"></ul>
+      </section>
+
+      <section class="panel">
+        <h2>Recurring Entries</h2>
+        <form id="recurring-form" class="grid-form">
+          <select name="freq" required>
+            <option value="monthly">monthly</option>
+            <option value="yearly">yearly</option>
+          </select>
+          <input name="name" placeholder="name" required />
+          <input name="amount" type="number" step="0.01" placeholder="amount" required />
+          <input name="category" placeholder="category" required />
+          <input name="start_key" placeholder="start_key (YYYY-MM)" required />
+          <input name="month_for_yearly" type="number" min="1" max="12" placeholder="month_for_yearly" />
+          <button type="submit">Add recurring</button>
+        </form>
+        <ul id="recurring-list"></ul>
+      </section>
+
+      <p id="status" class="status">Loading…</p>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="app.js"></script>
+  </body>
 </html>
