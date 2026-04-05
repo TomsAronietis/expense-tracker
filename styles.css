@@ -1,4 +1,6 @@
 :root {
+  color-scheme: light;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   color: #1f2937;
   background: #f3f4f6;
@@ -6,6 +8,25 @@
 
 body {
   margin: 0;
+  background: #f4f6fb;
+  color: #1f2937;
+}
+
+.container {
+  max-width: 760px;
+  margin: 2rem auto;
+  padding: 0 1rem 2rem;
+}
+
+.subtitle {
+  margin-top: 0.25rem;
+  color: #4b5563;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
 }
 
 .container {
@@ -22,6 +43,103 @@ body {
   margin-bottom: 1rem;
 }
 
+form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
+label {
+  display: grid;
+  gap: 0.25rem;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+input,
+button {
+  font: inherit;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  padding: 0.55rem 0.65rem;
+}
+
+button {
+  cursor: pointer;
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+  font-weight: 600;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+#status {
+  min-height: 1.25rem;
+  margin: 0 0 0.5rem;
+  color: #4b5563;
+}
+
+.expense-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.expense-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.65rem;
+}
+
+.expense-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.expense-title {
+  font-weight: 600;
+}
+
+.expense-date {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.expense-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.delete-btn {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.delete-btn:hover {
+  background: #b91c1c;
+}
+
+@media (max-width: 700px) {
+  form {
+    grid-template-columns: 1fr;
+  }
 .grid-form {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));

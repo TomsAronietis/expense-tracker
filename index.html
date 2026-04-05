@@ -426,6 +426,42 @@ function delRec(freq, id) { data.recurring[freq] = data.recurring[freq].filter(r
   <body>
     <main class="container">
       <header>
+        <h1>Shared Expense Tracker</h1>
+        <p class="subtitle">Track shared expenses with cloud persistence.</p>
+      </header>
+
+      <section class="card">
+        <h2>Add Expense</h2>
+        <form id="expense-form">
+          <label>
+            Description
+            <input id="title" name="title" type="text" required maxlength="100" />
+          </label>
+          <label>
+            Amount
+            <input id="amount" name="amount" type="number" min="0" step="0.01" required />
+          </label>
+          <label>
+            Date
+            <input id="spent_on" name="spent_on" type="date" required />
+          </label>
+          <button type="submit">Add</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="list-header">
+          <h2>Expenses</h2>
+          <span id="total">Total: $0.00</span>
+        </div>
+        <p id="status" role="status" aria-live="polite"></p>
+        <ul id="expense-list" class="expense-list"></ul>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
         <h1>Expense Tracker (Shared DB)</h1>
         <p class="hint">Optimistic updates + DB source of truth</p>
       </header>
