@@ -235,19 +235,25 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 const AUTH_USERNAME = 'SIA Aronietis';
 const AUTH_EMAIL = 'sia.aronietis@example.com';
 const WORKSPACE_ID = 'webgoalz-brothers';
-const APP_VERSION = 'wg_tracker_v8';
-const SUPABASE_URL = 'REPLACE_WITH_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'REPLACE_WITH_SUPABASE_ANON_KEY';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-function hasSupabaseConfig() {
-  return !SUPABASE_URL.includes('REPLACE_WITH') && !SUPABASE_ANON_KEY.includes('REPLACE_WITH');
-}
+const APP_VERSION = 'wg_tracker_v9';
+const FIREBASE_CONFIG = {
+  apiKey: 'REPLACE_WITH_FIREBASE_API_KEY',
+  authDomain: 'REPLACE_WITH_FIREBASE_AUTH_DOMAIN',
+  projectId: 'REPLACE_WITH_FIREBASE_PROJECT_ID',
+  appId: 'REPLACE_WITH_FIREBASE_APP_ID',
+};
+const hasFirebaseConfig = () => !Object.values(FIREBASE_CONFIG).some(v => String(v).includes('REPLACE_WITH'));
+const firebaseApp = firebase.initializeApp(FIREBASE_CONFIG);
+const auth = firebase.auth(firebaseApp);
+const db = firebase.firestore(firebaseApp);
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -294,23 +300,17 @@ function migrateDataShape(input) {
 }
 async function loadData() {
   try {
-    setSyncState('Loading from Supabase...');
-    const { data: row, error } = await supabase
-      .from('workspace_snapshots')
-      .select('payload')
-      .eq('workspace_id', WORKSPACE_ID)
-      .maybeSingle();
-
-    if (error) {
-      setSyncState('Load failed');
-      console.error(error);
-      return defData();
-    }
-    const parsed = row?.payload || defData();
+    setSyncState('Loading from Firebase...');
+    const doc = await db.collection('workspace_snapshots').doc(WORKSPACE_ID).get();
+    const parsed = doc.exists ? (doc.data()?.payload || defData()) : defData();
     const migrated = migrateDataShape(parsed).data;
     setSyncState('Loaded');
     return migrated;
-  } catch (e) { return defData(); }
+  } catch (e) {
+    console.error(e);
+    setSyncState('Load failed');
+    return defData();
+  }
 }
 function setSyncState(text) {
   const el = document.getElementById('sync-state');
@@ -320,13 +320,13 @@ async function saveNow() {
   if (!data) return;
   try {
     setSyncState('Syncing...');
-    const { error } = await supabase.from('workspace_snapshots').upsert({
-      workspace_id: WORKSPACE_ID,
+    await db.collection('workspace_snapshots').doc(WORKSPACE_ID).set({
       payload: data,
       app_version: APP_VERSION,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'workspace_id' });
-    if (error) throw error;
+      workspace_id: WORKSPACE_ID,
+      updated_by: auth.currentUser?.uid || null,
+      updated_at: firebase.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
     setSyncState('Synced');
   } catch (e) {
     console.error(e);
@@ -351,8 +351,8 @@ async function login() {
   const p = document.getElementById('auth-pass').value;
   const err = document.getElementById('auth-error');
   err.style.display = 'none';
-  if (!hasSupabaseConfig()) {
-    err.textContent = 'Supabase config is missing. Update SUPABASE_URL and SUPABASE_ANON_KEY.';
+  if (!hasFirebaseConfig()) {
+    err.textContent = 'Firebase config is missing. Update FIREBASE_CONFIG values.';
     err.style.display = 'block';
     return;
   }
@@ -361,8 +361,9 @@ async function login() {
     err.style.display = 'block';
     return;
   }
-  const { error } = await supabase.auth.signInWithPassword({ email: AUTH_EMAIL, password: p });
-  if (error) {
+  try {
+    await auth.signInWithEmailAndPassword(AUTH_EMAIL, p);
+  } catch (error) {
     console.error(error);
     err.textContent = 'Invalid username or password.';
     err.style.display = 'block';
@@ -372,7 +373,7 @@ async function login() {
 }
 
 async function logout() {
-  await supabase.auth.signOut();
+  await auth.signOut();
   document.getElementById('app-root').style.display = 'none';
   document.getElementById('auth-wrap').style.display = 'flex';
   document.getElementById('auth-pass').value = '';
@@ -380,8 +381,7 @@ async function logout() {
 }
 
 async function startApp() {
-  const { data: authData } = await supabase.auth.getUser();
-  if (!authData?.user) return;
+  if (!auth.currentUser) return;
   document.getElementById('whoami').textContent = 'Signed in as ' + AUTH_USERNAME + ' · Workspace: ' + WORKSPACE_ID;
   document.getElementById('auth-wrap').style.display = 'none';
   document.getElementById('app-root').style.display = 'block';
@@ -510,9 +510,7 @@ function delExp(id) { const m = getMonth(curYear,curMonth); m.expenses = m.expen
 function delRec(freq, id) { data.recurring[freq] = data.recurring[freq].filter(r=>r.id!==id); save(); renderRecurringView(); }
 
 (function boot() {
-  supabase.auth.getSession().then(({ data }) => {
-    if (data?.session) startApp();
-  });
+  auth.onAuthStateChanged((user) => { if (user) startApp(); });
   document.getElementById('auth-user').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
   document.getElementById('auth-pass').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
 })();
