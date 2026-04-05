@@ -1,93 +1,38 @@
-# Shared Expense Tracker (GitHub Pages + Supabase)
+# Shared Expense Tracker (Supabase)
 
-A simple static expense tracker intended for **GitHub Pages** hosting with shared persistence through **Supabase**.
+This version keeps an in-memory `data` object as a UI cache, but uses Supabase tables as the source of truth.
 
-## Project structure
+## Setup
 
-- `index.html` – app shell and script includes
-- `styles.css` – UI styles
-- `config.js` – public frontend config (`SUPABASE_URL`, `SUPABASE_ANON_KEY`)
-- `app.js` – app initialization, Supabase connectivity, CRUD rendering
-- `supabase/schema.sql` – SQL for required backend table + basic policies
-- `.github/workflows/ci.yml` – CI lint check on push/PR
+1. Create a Supabase project.
+2. Run `supabase/schema.sql` in the SQL editor.
+3. Update `SUPABASE_URL` and `SUPABASE_ANON_KEY` in `app.js`.
+4. Serve the project statically (for example with `python -m http.server`).
 
-## 1) Create or use a GitHub repository
+## Data flow
 
-1. Create a new GitHub repository (or use this one).
-2. Ensure the app files are at repository root (`index.html`, `app.js`, `styles.css`, `config.js`).
-3. Push to the `main` branch.
+- Initial load is now async DB fetch (`save()` delegates to DB fetch for compatibility).
+- Mutations use optimistic UI updates.
+- If a save fails, local cache is rolled back.
+- On successful mutation, app re-fetches all tables so multiple users converge on latest records.
 
-## 2) Enable GitHub Pages (`main` branch, `/root`)
+## Fix pull request merge conflicts
 
-1. Go to **Repo Settings → Pages**.
-2. Under **Build and deployment**, set:
-   - **Source**: `Deploy from a branch`
-   - **Branch**: `main`
-   - **Folder**: `/ (root)`
-3. Save. GitHub will publish your site URL.
-
-## 3) Create backend project (Supabase)
-
-1. Create a Supabase project at <https://supabase.com>.
-2. In Supabase SQL Editor, run `supabase/schema.sql`.
-3. Confirm `public.expenses` exists.
-
-> Security note: the included row-level policies allow anonymous read/insert/delete for easy sharing. For production use, switch to authenticated access and tighter policies.
-
-## 4) Add frontend public config
-
-Edit `config.js` with your real project values:
-
-```js
-window.APP_CONFIG = {
-  SUPABASE_URL: 'https://<your-project-ref>.supabase.co',
-  SUPABASE_ANON_KEY: '<your-public-anon-key>'
-};
-```
-
-These values are intentionally public and safe to expose in browser apps.
-
-## 5) App startup behavior
-
-On load, `app.js`:
-
-- Creates a Supabase client
-- Fetches expenses from `public.expenses`
-- Renders rows and total amount
-- Supports insert and delete operations
-
-## 6) CI lint check
-
-This repo includes a GitHub Actions workflow (`.github/workflows/ci.yml`) that runs:
+If your pull request says it has conflicts, run the helper script from your feature branch:
 
 ```bash
-npm run lint
+./scripts/fix-pr-conflicts.sh main
 ```
 
-Current lint is a basic syntax check:
+What it does:
+
+- Verifies you're not on the base branch.
+- Verifies your working tree is clean.
+- Rebases your current branch onto the base branch.
+- Prints exact next steps if conflicts appear (`git add ...`, `git rebase --continue`, `git rebase --abort`).
+
+After a successful rebase, push with:
 
 ```bash
-node --check app.js && node --check config.js
+git push --force-with-lease
 ```
-
-## 7) Optional custom domain
-
-If you want a custom domain:
-
-1. In **Settings → Pages**, add your custom domain.
-2. In your DNS provider, point the domain to GitHub Pages (via CNAME/ALIAS/A records as prompted by GitHub).
-3. Wait for DNS propagation and certificate issuance.
-
----
-
-## Local usage
-
-Because this is a static app, you can run it with any static file server.
-
-Example:
-
-```bash
-python -m http.server 8080
-```
-
-Then open <http://localhost:8080>.

@@ -1,6 +1,9 @@
 :root {
   color-scheme: light;
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: #1f2937;
+  background: #f3f4f6;
 }
 
 body {
@@ -24,6 +27,18 @@ body {
   background: white;
   border-radius: 12px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.panel {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   padding: 1rem;
   margin-bottom: 1rem;
 }
@@ -125,4 +140,33 @@ button:hover {
   form {
     grid-template-columns: 1fr;
   }
+.grid-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+input,
+select,
+button {
+  padding: 0.5rem;
+}
+
+ul {
+  padding-left: 1.2rem;
+}
+
+li {
+  margin-bottom: 0.25rem;
+}
+
+.status {
+  padding: 0.5rem;
+  border-radius: 6px;
+  background: #e5e7eb;
+}
+
+.hint {
+  color: #6b7280;
 }

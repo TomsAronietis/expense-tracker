@@ -1,3 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Webgoalz Expense Tracker</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f3; --bg3: #eeede9; --border: rgba(0,0,0,0.1); --border2: rgba(0,0,0,0.18);
+    --text: #1a1a18; --text2: #5a5a56; --text3: #9a9a94;
+    --green: #1D9E75; --green-bg: #EAF3DE; --green-text: #3B6D11;
+    --amber: #BA7517; --amber-bg: #FAEEDA; --amber-text: #854F0B;
+    --red: #D85A30; --blue: #185FA5; --blue-bg: #E6F1FB;
+    --purple: #534AB7; --purple-bg: #EEEDFE; --gray-bg: #F1EFE8; --gray-text: #5F5E5A;
+    --radius: 8px; --radius-lg: 12px;
+  }
+  body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap');
+
+  .auth-wrap { min-height: 100vh; display:flex; align-items:center; justify-content:center; padding: 1.5rem; }
+  .auth-card { width: 100%; max-width: 420px; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; }
+  .auth-title { font-size: 14px; font-weight: 500; margin-bottom: 0.85rem; color: var(--text2); }
+  .auth-row { display:flex; flex-direction:column; gap: 0.35rem; margin-bottom: 0.8rem; }
+  .auth-row label { font-size: 12px; color: var(--text3); }
+  .auth-row input { font-size: 13px; padding: 8px 10px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg2); }
+  .auth-btn { width: 100%; font-size: 13px; padding: 9px 10px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--text); color: var(--bg); cursor:pointer; }
+  .auth-hint { margin-top: 0.8rem; font-size: 11px; color: var(--text3); }
+  .auth-error { margin-bottom: 0.6rem; font-size: 11px; color: var(--red); display:none; }
+
+  .app { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; display:none; }
+  .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.7rem; gap: 10px; }
+  .whoami { font-size: 11px; color: var(--text3); }
+  .logout-btn { font-size: 11px; padding: 5px 9px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); cursor: pointer; }
+  h1 { font-size: 15px; font-weight: 500; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 1.2rem; }
+
+  .tab-row { display: flex; gap: 6px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .tab { padding: 7px 18px; border: 0.5px solid var(--border2); border-radius: var(--radius); font-size: 13px; cursor: pointer; background: var(--bg); color: var(--text2); transition: all 0.15s; font-family: inherit; }
+  .tab:hover { background: var(--bg2); }
+  .tab.active { background: var(--text); color: var(--bg); border-color: transparent; }
+
+  .month-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
+  .month-nav button { background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius); width: 34px; height: 34px; cursor: pointer; color: var(--text); font-size: 16px; display: flex; align-items: center; justify-content: center; font-family: inherit; }
+  .month-nav button:hover { background: var(--bg2); }
+  .month-label { font-size: 16px; font-weight: 500; min-width: 160px; text-align: center; color: var(--text); }
+
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1rem; }
+  .metric { background: var(--bg); border-radius: var(--radius); padding: 14px 16px; border: 0.5px solid var(--border); }
+  .metric-label { font-size: 10px; color: var(--text3); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .metric-value { font-size: 21px; font-weight: 500; color: var(--text); font-family: 'DM Mono', monospace; }
+  .metric-value.g { color: var(--green); }
+  .metric-value.r { color: var(--red); }
+  .metric-value.o { color: var(--amber); }
+
+  .net-bar { height: 5px; border-radius: 4px; background: var(--bg3); margin: 10px 0 4px; overflow: hidden; }
+  .net-bar-fill { height: 100%; border-radius: 4px; background: var(--green); transition: width 0.4s; }
+  .net-bar-fill.over { background: var(--red); }
+  .bar-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); margin-bottom: 1.5rem; }
+
+  .section-label { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin: 1.5rem 0 0.75rem; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 1.25rem; }
+  @media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.2rem; }
+  .card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .card-title { font-size: 13px; font-weight: 500; color: var(--text); }
+  .card-sum { font-size: 13px; font-weight: 500; font-family: 'DM Mono', monospace; }
+  .card-sum.g { color: var(--green); }
+  .card-sum.r { color: var(--red); }
+  .entry { display: flex; align-items: center; gap: 5px; padding: 6px 0; border-bottom: 0.5px solid var(--border); font-size: 12px; }
+  .entry:last-of-type { border-bottom: none; }
+  .entry-name { flex: 1; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .entry-amt { font-weight: 500; color: var(--text); margin-right: 2px; white-space: nowrap; font-family: 'DM Mono', monospace; font-size: 11px; }
+  .badge { font-size: 10px; padding: 2px 7px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
+  .badge-pending { background: var(--amber-bg); color: var(--amber-text); }
+  .badge-confirmed { background: var(--green-bg); color: var(--green-text); }
+  .badge-rolled { background: var(--amber-bg); color: var(--amber-text); border: 0.5px dashed var(--amber); }
+  .badge-client { background: var(--blue-bg); color: var(--blue); }
+  .badge-general { background: var(--gray-bg); color: var(--gray-text); }
+  .badge-business { background: var(--purple-bg); color: var(--purple); }
+  .badge-rec { background: var(--bg2); color: var(--text3); }
+  .confirm-btn { background: var(--green-bg); border: none; border-radius: 4px; cursor: pointer; color: var(--green-text); font-size: 10px; padding: 2px 7px; white-space: nowrap; flex-shrink: 0; font-family: inherit; }
+  .confirm-btn:hover { background: #C0DD97; }
+  .del-btn { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 13px; padding: 0 2px; flex-shrink: 0; line-height: 1; }
+  .del-btn:hover { color: var(--red); }
+  .add-row { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .add-row input, .add-row select { font-size: 12px; padding: 6px 8px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg2); color: var(--text); font-family: inherit; outline: none; }
+  .add-row input:focus, .add-row select:focus { border-color: var(--text); }
+  .add-row input { flex: 1; min-width: 80px; }
+  .add-row input.amt { max-width: 72px; flex: none; }
+  .add-row select { flex: none; }
+  .add-row button { font-size: 12px; padding: 6px 12px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); cursor: pointer; white-space: nowrap; flex-shrink: 0; font-family: inherit; }
+  .add-row button:hover { background: var(--bg2); }
+  .rec-entry { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 0.5px solid var(--border); font-size: 12px; }
+  .rec-entry:last-of-type { border-bottom: none; }
+  .rec-name { flex: 1; color: var(--text); }
+  .rec-meta { color: var(--text3); font-size: 11px; flex-shrink: 0; }
+  .rec-amt { font-weight: 500; color: var(--text); flex-shrink: 0; font-family: 'DM Mono', monospace; font-size: 11px; }
+  .empty { font-size: 12px; color: var(--text3); padding: 6px 0; }
+  .chart-wrap { position: relative; height: 200px; margin-top: 4px; }
+  .legend { display: flex; gap: 16px; margin-bottom: 8px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .donut-row { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+  .donut-legend { flex: 1; min-width: 120px; padding-top: 4px; }
+  .donut-legend-item { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 12px; }
+  .donut-legend-item .dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .pending-note { font-size: 11px; color: var(--amber-text); background: var(--amber-bg); border-radius: var(--radius); padding: 7px 10px; margin-bottom: 10px; }
+  .start-note { font-size: 11px; color: var(--text2); background: var(--bg2); border-radius: var(--radius); padding: 8px 10px; margin-bottom: 14px; border: 0.5px solid var(--border); }
+</style>
+</head>
+<body>
+<div id="auth-wrap" class="auth-wrap">
+  <div class="auth-card">
+    <p class="auth-title">Sign in to Expense Tracker</p>
+    <p id="auth-error" class="auth-error">Invalid username or password.</p>
+    <div class="auth-row"><label for="auth-user">Username</label><input id="auth-user" autocomplete="username" /></div>
+    <div class="auth-row"><label for="auth-pass">Password</label><input id="auth-pass" type="password" autocomplete="current-password" /></div>
+    <button class="auth-btn" onclick="login()">Sign in</button>
+    <p class="auth-hint">Shared workspace: <strong>webgoalz-brothers</strong></p>
+  </div>
+</div>
+
+<div class="app" id="app-root">
+  <div class="topbar">
+    <div class="whoami" id="whoami"></div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+  <h1>Webgoalz &mdash; Expense Tracker</h1>
+
+  <div class="tab-row">
+    <button class="tab active" onclick="setView('month')">This month</button>
+    <button class="tab" onclick="setView('year')">This year</button>
+    <button class="tab" onclick="setView('all')">All time</button>
+    <button class="tab" onclick="setView('recurring')">Recurring</button>
+  </div>
+
+  <div id="month-nav" class="month-nav">
+    <button onclick="changeMonth(-1)">&#8592;</button>
+    <div class="month-label" id="month-label"></div>
+    <button onclick="changeMonth(1)">&#8594;</button>
+  </div>
+
+  <div id="main-view">
+    <div class="metrics" id="metrics"></div>
+    <div class="net-bar"><div class="net-bar-fill" id="net-bar-fill"></div></div>
+    <div class="bar-labels"><span id="bar-left"></span><span id="bar-right"></span></div>
+
+    <p class="section-label">Income</p>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-head">
+        <span class="card-title">Income</span>
+        <span style="display:flex;gap:10px;align-items:center;">
+          <span style="font-size:11px;color:var(--amber);" id="pending-label"></span>
+          <span class="card-sum g" id="income-total">€0</span>
+        </span>
+      </div>
+      <div id="pending-note-area"></div>
+      <div id="income-list"></div>
+      <div class="add-row" id="income-add-row">
+        <input id="inc-name" placeholder="Client / source" />
+        <input id="inc-amount" type="number" placeholder="€" class="amt" />
+        <select id="inc-type"><option value="confirmed">Confirmed</option><option value="pending">Pending</option></select>
+        <button onclick="addIncome()">+ Add</button>
+      </div>
+    </div>
+
+    <p class="section-label">Expenses</p>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head"><span class="card-title">Manual expenses</span><span class="card-sum r" id="exp-total">€0</span></div>
+        <div id="exp-list"></div>
+        <div class="add-row" id="exp-add-row">
+          <input id="exp-name" placeholder="Item / tool" />
+          <input id="exp-amount" type="number" placeholder="€" class="amt" />
+          <select id="exp-cat">
+            <option value="client">Client</option><option value="general">General</option><option value="business">Business</option>
+          </select>
+          <button onclick="addExpense()">+ Add</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Recurring (this month)</span><span class="card-sum r" id="rec-total">€0</span></div>
+        <div id="rec-applied-list"></div>
+      </div>
+    </div>
+
+    <p class="section-label">Trend (last 12 months)</p>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#1D9E75"></div>Confirmed income</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#EF9F27"></div>Pending income</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#D85A30"></div>Expenses</div>
+      </div>
+      <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+    </div>
+
+    <p class="section-label">Expense breakdown</p>
+    <div class="card">
+      <div class="donut-row">
+        <div style="flex:1;min-width:150px;position:relative;height:200px;"><canvas id="donutChart"></canvas></div>
+        <div class="donut-legend" id="donut-legend"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="recurring-view" style="display:none;">
+    <div class="start-note" id="rec-start-note"></div>
+    <p class="section-label" style="margin-top:0;">Monthly recurring</p>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-head"><span class="card-title">Auto-applies every month</span><span class="card-sum r" id="rec-monthly-total">€0/mo</span></div>
+      <div id="rec-monthly-list"></div>
+      <div class="add-row">
+        <input id="rm-name" placeholder="Name" />
+        <input id="rm-amount" type="number" placeholder="€" class="amt" />
+        <select id="rm-cat"><option value="business">Business</option><option value="client">Client</option><option value="general">General</option></select>
+        <button onclick="addRecurring('monthly')">+ Add</button>
+      </div>
+    </div>
+    <p class="section-label">Yearly recurring</p>
+    <div class="card">
+      <div class="card-head"><span class="card-title">Applies once per year</span><span class="card-sum r" id="rec-yearly-total">€0/yr</span></div>
+      <div id="rec-yearly-list"></div>
+      <div class="add-row">
+        <input id="ry-name" placeholder="Name" />
+        <input id="ry-amount" type="number" placeholder="€" class="amt" />
+        <select id="ry-month"><option value="0">Jan</option><option value="1">Feb</option><option value="2">Mar</option><option value="3">Apr</option><option value="4">May</option><option value="5">Jun</option><option value="6">Jul</option><option value="7">Aug</option><option value="8">Sep</option><option value="9">Oct</option><option value="10">Nov</option><option value="11">Dec</option></select>
+        <select id="ry-cat"><option value="business">Business</option><option value="client">Client</option><option value="general">General</option></select>
+        <button onclick="addRecurring('yearly')">+ Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const AUTH_USERNAME = 'SIA Aronietis';
+const AUTH_PASSWORD = 'tom*Aronietis!2';
+const AUTH_SESSION_KEY = 'wg_auth_session_v1';
+const WORKSPACE_ID = 'webgoalz-brothers';
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const CAT_COLORS = { client: '#185FA5', general: '#888780', business: '#534AB7' };
+
+let view = 'month';
+let curMonth = 3;
+let curYear = 2025;
+let data = null;
+let trendInst = null, donutInst = null;
+
+function storageKey() { return 'wg_tracker_v6_' + WORKSPACE_ID; }
+function defData() { return { months: {}, recurring: { monthly: [], yearly: [] } }; }
+function loadData() {
+  try {
+    const s = localStorage.getItem(storageKey());
+    return s ? JSON.parse(s) : defData();
+  } catch (e) { return defData(); }
+}
+function save() { try { localStorage.setItem(storageKey(), JSON.stringify(data)); } catch(e) {} }
+
+function login() {
+  const u = document.getElementById('auth-user').value.trim();
+  const p = document.getElementById('auth-pass').value;
+  const err = document.getElementById('auth-error');
+  if (u === AUTH_USERNAME && p === AUTH_PASSWORD) {
+    sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({ username: u, workspaceId: WORKSPACE_ID, ts: Date.now() }));
+    startApp();
+    return;
+  }
+  err.style.display = 'block';
+}
+
+function logout() {
+  sessionStorage.removeItem(AUTH_SESSION_KEY);
+  document.getElementById('app-root').style.display = 'none';
+  document.getElementById('auth-wrap').style.display = 'flex';
+  document.getElementById('auth-pass').value = '';
+}
+
+function startApp() {
+  const raw = sessionStorage.getItem(AUTH_SESSION_KEY);
+  if (!raw) return;
+  const s = JSON.parse(raw);
+  document.getElementById('whoami').textContent = 'Signed in as ' + s.username + ' · Workspace: ' + s.workspaceId;
+  document.getElementById('auth-wrap').style.display = 'none';
+  document.getElementById('app-root').style.display = 'block';
+  data = loadData();
+  render();
+}
+
+function mkey(y, m) { return y + '-' + String(m).padStart(2,'0'); }
+function uid() { return Date.now() + Math.floor(Math.random()*9999); }
+function fmt(n) { return '€' + parseFloat(n).toFixed(2).replace(/\.00$/,''); }
+function keyGte(k1, k2) { return k1.localeCompare(k2) >= 0; }
+function prevMonthOf(y, m) { return m===0 ? {y:y-1,m:11} : {y,m:m-1}; }
+function getMonth(y, m) { const k = mkey(y,m); if (!data.months[k]) data.months[k] = { income:[], expenses:[] }; return data.months[k]; }
+function getRecurringForMonth(y, m) { const k = mkey(y,m); return [...data.recurring.monthly.filter(r => keyGte(k, r.startKey||'0000-00')),...data.recurring.yearly.filter(r => parseInt(r.month)===m && keyGte(k, r.startKey||'0000-00'))]; }
+function propagatePending(y, m) {
+  const k = mkey(y,m), prev = prevMonthOf(y,m), pk = mkey(prev.y,prev.m);
+  if (!data.months[pk]) return;
+  const prevPending = data.months[pk].income.filter(e => e.status==='pending');
+  if (!prevPending.length) return;
+  if (!data.months[k]) data.months[k] = {income:[],expenses:[]};
+  const cur = data.months[k];
+  prevPending.forEach(pp => {
+    const originId = pp.originId || pp.id;
+    const alreadyHere = cur.income.some(e => e.originId===originId || e.id===originId);
+    if (!alreadyHere) cur.income.push({ id:uid(), name:pp.name, amount:pp.amount, status:'pending', originId, rolledFrom:pk });
+  });
+  save();
+}
+
+function setView(v) {
+  view = v;
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['month','year','all','recurring'][i]===v));
+  const isRec = v==='recurring';
+  document.getElementById('main-view').style.display = isRec ? 'none' : '';
+  document.getElementById('recurring-view').style.display = isRec ? '' : 'none';
+  document.getElementById('month-nav').style.display = v==='month' ? 'flex' : 'none';
+  if (isRec) renderRecurringView(); else render();
+}
+function changeMonth(d) { curMonth += d; if (curMonth < 0) { curMonth=11; curYear--; } if (curMonth > 11) { curMonth=0; curYear++; } if (d > 0) propagatePending(curYear, curMonth); render(); }
+function sumIncome(entries) { return entries.reduce((a,e)=>a+e.amount,0); }
+function sumExp(entries) { return entries.reduce((a,e)=>a+e.amount,0); }
+
+function render() {
+  const addRows = document.querySelectorAll('#income-add-row,#exp-add-row');
+  if (view==='month') {
+    propagatePending(curYear, curMonth);
+    document.getElementById('month-label').textContent = MONTH_NAMES[curMonth]+' '+curYear;
+    const m = getMonth(curYear, curMonth), rec = getRecurringForMonth(curYear, curMonth);
+    const confirmed = m.income.filter(e=>e.status==='confirmed'), pending = m.income.filter(e=>e.status==='pending');
+    const incC = sumIncome(confirmed), incP = sumIncome(pending), exp = sumExp(m.expenses) + sumExp(rec);
+    renderMetrics(incC, incP, exp, incC-exp, null); renderBar(incC, exp); renderIncomeList(m.income); renderExpList(m.expenses); renderRecApplied(rec); addRows.forEach(r=>r.style.display='flex');
+  } else {
+    addRows.forEach(r=>r.style.display='none');
+    const keys = view==='year' ? Object.keys(data.months).filter(k=>k.startsWith(curYear+'-')).sort() : Object.keys(data.months).sort();
+    let incC=0, incP=0, exp=0;
+    keys.forEach(k=>{ const parts=k.split('-'); const y=+parts[0]; const mo=+parts[1]-1; const rec = getRecurringForMonth(y, mo); data.months[k].income.forEach(e=>{ if(e.status==='confirmed') incC+=e.amount; else incP+=e.amount; }); exp += sumExp(data.months[k].expenses)+sumExp(rec); });
+    if (view==='year') document.getElementById('month-label').textContent = String(curYear);
+    renderMetrics(incC, incP, exp, incC-exp, keys.length); renderBar(incC, exp);
+    document.getElementById('income-list').innerHTML='<p class="empty">Navigate to a month to manage entries.</p>';
+    document.getElementById('income-total').textContent=fmt(incC);
+    document.getElementById('pending-label').textContent=incP>0?fmt(incP)+' pending':'';
+    document.getElementById('pending-note-area').innerHTML='';
+    document.getElementById('exp-list').innerHTML='<p class="empty">Navigate to a month to manage entries.</p>';
+    document.getElementById('exp-total').textContent=fmt(exp);
+    document.getElementById('rec-applied-list').innerHTML='';
+    document.getElementById('rec-total').textContent='€0';
+  }
+  renderTrend(); renderDonut();
+}
+
+function renderMetrics(incC, incP, exp, net, months) {
+  const margin = incC>0 ? Math.round((net/incC)*100) : 0;
+  let items = [{label:'Confirmed income', value:fmt(incC), cls:'g'},{label:'Pending income', value:fmt(incP), cls:'o'},{label:'Expenses', value:fmt(exp), cls:'r'},{label:'Net profit', value:fmt(net), cls:net>=0?'g':'r'},{label:'Margin', value:incC>0?margin+'%':'—', cls:net>=0?'g':'r'}];
+  if (months!==null) items.push({label:'Months tracked', value:months, cls:''});
+  document.getElementById('metrics').innerHTML = items.map(m=>`<div class="metric"><div class="metric-label">${m.label}</div><div class="metric-value ${m.cls}">${m.value}</div></div>`).join('');
+}
+function renderBar(incC, exp) { const pct = incC>0 ? Math.min(100,(exp/incC)*100) : (exp>0?100:0); const fill = document.getElementById('net-bar-fill'); fill.style.width = pct+'%'; fill.className = 'net-bar-fill'+(pct>=100?' over':''); document.getElementById('bar-left').textContent = 'Spent '+Math.round(pct)+'% of confirmed income'; document.getElementById('bar-right').textContent = incC>0 ? fmt(incC-exp)+' remaining' : ''; }
+function renderIncomeList(entries) {
+  const confirmed = entries.filter(e=>e.status==='confirmed'), pending = entries.filter(e=>e.status==='pending');
+  document.getElementById('income-total').textContent = fmt(sumIncome(confirmed));
+  document.getElementById('pending-label').textContent = pending.length ? fmt(sumIncome(pending))+' pending' : '';
+  document.getElementById('pending-note-area').innerHTML = pending.length ? '<div class="pending-note">Pending payments roll forward each month until confirmed or deleted.</div>' : '';
+  if (!entries.length) { document.getElementById('income-list').innerHTML='<p class="empty">No entries.</p>'; return; }
+  document.getElementById('income-list').innerHTML = entries.map(e=>{ const isRolled = !!e.rolledFrom; const badge = e.status==='pending' ? `<span class="badge ${isRolled?'badge-rolled':'badge-pending'}">${isRolled?'rolled':'pending'}</span>` : `<span class="badge badge-confirmed">confirmed</span>`; const confirmBtn = e.status==='pending' ? `<button class="confirm-btn" onclick="confirmIncome(${e.id})">Confirm</button>` : ''; return `<div class="entry"><span class="entry-name" title="${e.name}">${e.name}</span><span class="entry-amt">${fmt(e.amount)}</span>${badge}${confirmBtn}<button class="del-btn" onclick="delIncome(${e.id})">&#10005;</button></div>`; }).join('');
+}
+function renderExpList(entries) { document.getElementById('exp-total').textContent = fmt(sumExp(entries)); if (!entries.length) { document.getElementById('exp-list').innerHTML='<p class="empty">No entries.</p>'; return; } document.getElementById('exp-list').innerHTML = entries.map(e=>`<div class="entry"><span class="entry-name" title="${e.name}">${e.name}</span><span class="entry-amt">${fmt(e.amount)}</span><span class="badge badge-${e.cat}">${e.cat}</span><button class="del-btn" onclick="delExp(${e.id})">&#10005;</button></div>`).join(''); }
+function renderRecApplied(rec) { document.getElementById('rec-total').textContent = fmt(sumExp(rec)); if (!rec.length) { document.getElementById('rec-applied-list').innerHTML='<p class="empty">No recurring this month.</p>'; return; } document.getElementById('rec-applied-list').innerHTML = rec.map(r=>`<div class="entry"><span class="entry-name">${r.name}</span><span class="entry-amt">${fmt(r.amount)}</span><span class="badge badge-rec">${r.freq||'monthly'}</span><span class="badge badge-${r.cat}">${r.cat}</span></div>`).join(''); }
+function renderRecurringView() {
+  document.getElementById('rec-start-note').textContent = 'New recurring payments will start from '+MONTH_NAMES[curMonth]+' '+curYear+'. Navigate to a different month first to change the start date.';
+  const monthly = data.recurring.monthly, yearly = data.recurring.yearly;
+  document.getElementById('rec-monthly-total').textContent = fmt(sumExp(monthly))+'/mo';
+  document.getElementById('rec-yearly-total').textContent = fmt(sumExp(yearly))+'/yr';
+  document.getElementById('rec-monthly-list').innerHTML = monthly.length ? monthly.map(r=>`<div class="rec-entry"><span class="rec-name">${r.name}</span><span class="badge badge-${r.cat}">${r.cat}</span><span class="rec-meta">from ${r.startKey}</span><span class="rec-amt">${fmt(r.amount)}</span><span class="rec-meta">/mo</span><button class="del-btn" onclick="delRec('monthly',${r.id})">&#10005;</button></div>`).join('') : '<p class="empty">None set.</p>';
+  document.getElementById('rec-yearly-list').innerHTML = yearly.length ? yearly.map(r=>`<div class="rec-entry"><span class="rec-name">${r.name}</span><span class="badge badge-${r.cat}">${r.cat}</span><span class="rec-meta">every ${MONTHS[r.month]} · from ${r.startKey}</span><span class="rec-amt">${fmt(r.amount)}</span><span class="rec-meta">/yr</span><button class="del-btn" onclick="delRec('yearly',${r.id})">&#10005;</button></div>`).join('') : '<p class="empty">None set.</p>';
+}
+function renderTrend() {
+  const curKey = mkey(curYear, curMonth); if (!data.months[curKey]) data.months[curKey] = { income:[], expenses:[] };
+  const allKeys = [...new Set([...Object.keys(data.months), curKey])].sort().slice(-12);
+  const labels = allKeys.map(k=>{ const [y,m]=k.split('-'); return MONTHS[+m-1]+"'"+y.slice(2); });
+  const confirmed = allKeys.map(k=>{ const md=data.months[k]; return md?Math.round(sumIncome(md.income.filter(e=>e.status==='confirmed'))*100)/100:0; });
+  const pending = allKeys.map(k=>{ const md=data.months[k]; return md?Math.round(sumIncome(md.income.filter(e=>e.status==='pending'))*100)/100:0; });
+  const exps = allKeys.map(k=>{ const parts=k.split('-'); const y=+parts[0]; const mo=+parts[1]-1; const md=data.months[k]; return Math.round(((md?sumExp(md.expenses):0)+sumExp(getRecurringForMonth(y,mo)))*100)/100; });
+  if (trendInst) trendInst.destroy();
+  trendInst = new Chart(document.getElementById('trendChart'),{ type:'bar', data:{ labels, datasets:[{label:'Confirmed',data:confirmed,backgroundColor:'#1D9E75',borderRadius:4,stack:'income'},{label:'Pending',data:pending,backgroundColor:'#EF9F27',borderRadius:4,stack:'income'},{label:'Expenses',data:exps,backgroundColor:'#D85A30',borderRadius:4}] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{font:{size:10},autoSkip:false,maxRotation:45},grid:{display:false}}, y:{ticks:{font:{size:10},callback:v=>'€'+v},grid:{color:'rgba(0,0,0,0.05)'}} } } });
+}
+function renderDonut() {
+  const curKey = mkey(curYear,curMonth); if (!data.months[curKey]) data.months[curKey] = { income:[], expenses:[] };
+  let keys; if (view==='month') keys = [curKey]; else if (view==='year') keys = [...new Set([...Object.keys(data.months).filter(k=>k.startsWith(curYear+'-')), curKey])]; else keys = [...new Set([...Object.keys(data.months), curKey])];
+  const cats = {}; keys.forEach(k=>{ const parts=k.split('-'); const y=+parts[0]; const mo=+parts[1]-1; const md=data.months[k]; const rec=getRecurringForMonth(y,mo); if (md) md.expenses.forEach(e=>{ const c=e.cat||'general'; cats[c]=(cats[c]||0)+e.amount; }); rec.forEach(e=>{ const c=e.cat||'general'; cats[c]=(cats[c]||0)+e.amount; }); });
+  const labels = Object.keys(cats).filter(c=>cats[c]>0), values = labels.map(l=>Math.round(cats[l]*100)/100), colors = labels.map(l=>CAT_COLORS[l]||'#888780'), total = values.reduce((a,b)=>a+b,0);
+  if (donutInst) donutInst.destroy(); if (!labels.length) { document.getElementById('donut-legend').innerHTML='<p class="empty">No data.</p>'; return; }
+  donutInst = new Chart(document.getElementById('donutChart'),{ type:'doughnut', data:{labels,datasets:[{data:values,backgroundColor:colors,borderWidth:0,hoverOffset:4}]}, options:{ responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' €'+ctx.parsed.toFixed(2)}}} } });
+  document.getElementById('donut-legend').innerHTML = labels.map((l,i)=>`<div class="donut-legend-item"><div class="dot" style="background:${colors[i]}"></div><span style="flex:1;text-transform:capitalize;color:var(--text);">${l}</span><span style="font-weight:500;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;">${fmt(values[i])}</span><span style="color:var(--text3);margin-left:4px;font-size:11px;">${total>0?Math.round(values[i]/total*100):0}%</span></div>`).join('');
+}
+function addIncome() { const name = document.getElementById('inc-name').value.trim(), amount = parseFloat(document.getElementById('inc-amount').value), status = document.getElementById('inc-type').value; if (!name||isNaN(amount)||amount<=0) return; getMonth(curYear,curMonth).income.push({id:uid(),name,amount,status,originId:null,rolledFrom:null}); document.getElementById('inc-name').value=''; document.getElementById('inc-amount').value=''; save(); render(); }
+function addExpense() { const name = document.getElementById('exp-name').value.trim(), amount = parseFloat(document.getElementById('exp-amount').value), cat = document.getElementById('exp-cat').value; if (!name||isNaN(amount)||amount<=0) return; getMonth(curYear,curMonth).expenses.push({id:uid(),name,amount,cat}); document.getElementById('exp-name').value=''; document.getElementById('exp-amount').value=''; save(); render(); }
+function addRecurring(freq) {
+  const startKey = mkey(curYear, curMonth);
+  if (freq==='monthly') { const name=document.getElementById('rm-name').value.trim(), amount=parseFloat(document.getElementById('rm-amount').value), cat=document.getElementById('rm-cat').value; if (!name||isNaN(amount)||amount<=0) return; data.recurring.monthly.push({id:uid(),name,amount,cat,freq:'monthly',startKey}); document.getElementById('rm-name').value=''; document.getElementById('rm-amount').value=''; }
+  else { const name=document.getElementById('ry-name').value.trim(), amount=parseFloat(document.getElementById('ry-amount').value), month=parseInt(document.getElementById('ry-month').value), cat=document.getElementById('ry-cat').value; if (!name||isNaN(amount)||amount<=0) return; data.recurring.yearly.push({id:uid(),name,amount,cat,month,freq:'yearly',startKey}); document.getElementById('ry-name').value=''; document.getElementById('ry-amount').value=''; }
+  save(); renderRecurringView();
+}
+function confirmIncome(id) { const m = getMonth(curYear,curMonth), entry = m.income.find(e=>e.id===id); if (!entry) return; const originId = entry.originId||entry.id; entry.status='confirmed'; entry.rolledFrom=null; Object.keys(data.months).forEach(k=>{ if (k===mkey(curYear,curMonth)) return; data.months[k].income = data.months[k].income.filter(e=> !((e.originId===originId||e.id===originId)&&e.status==='pending') ); }); save(); render(); }
+function delIncome(id) { const m = getMonth(curYear,curMonth), entry = m.income.find(e=>e.id===id); if (!entry) return; if (entry.status==='pending') { const originId = entry.originId||entry.id; Object.keys(data.months).forEach(k=>{ data.months[k].income = data.months[k].income.filter(e=> !(e.originId===originId||e.id===originId)); }); } else m.income = m.income.filter(e=>e.id!==id); save(); render(); }
+function delExp(id) { const m = getMonth(curYear,curMonth); m.expenses = m.expenses.filter(e=>e.id!==id); save(); render(); }
+function delRec(freq, id) { data.recurring[freq] = data.recurring[freq].filter(r=>r.id!==id); save(); renderRecurringView(); }
+
+(function boot() {
+  const raw = sessionStorage.getItem(AUTH_SESSION_KEY);
+  if (raw) { startApp(); }
+  document.getElementById('auth-pass').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+})();
+</script>
+</body>
 <!doctype html>
 <html lang="en">
   <head>
@@ -45,5 +462,65 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
     <script src="app.js"></script>
+        <h1>Expense Tracker (Shared DB)</h1>
+        <p class="hint">Optimistic updates + DB source of truth</p>
+      </header>
+
+      <section class="panel">
+        <h2>Configuration</h2>
+        <p>
+          Set your Supabase credentials in <code>app.js</code>.
+          Current user id is stored in <code>APP_USER_ID</code>.
+        </p>
+      </section>
+
+      <section class="panel">
+        <h2>Income Entries</h2>
+        <form id="income-form" class="grid-form">
+          <input name="month_key" placeholder="month_key (YYYY-MM)" required />
+          <input name="name" placeholder="name" required />
+          <input name="amount" type="number" step="0.01" placeholder="amount" required />
+          <input name="status" placeholder="status" value="planned" required />
+          <input name="origin_id" placeholder="origin_id" />
+          <input name="rolled_from" placeholder="rolled_from" />
+          <button type="submit">Add income</button>
+        </form>
+        <ul id="income-list"></ul>
+      </section>
+
+      <section class="panel">
+        <h2>Expense Entries</h2>
+        <form id="expense-form" class="grid-form">
+          <input name="month_key" placeholder="month_key (YYYY-MM)" required />
+          <input name="name" placeholder="name" required />
+          <input name="amount" type="number" step="0.01" placeholder="amount" required />
+          <input name="category" placeholder="category" required />
+          <button type="submit">Add expense</button>
+        </form>
+        <ul id="expense-list"></ul>
+      </section>
+
+      <section class="panel">
+        <h2>Recurring Entries</h2>
+        <form id="recurring-form" class="grid-form">
+          <select name="freq" required>
+            <option value="monthly">monthly</option>
+            <option value="yearly">yearly</option>
+          </select>
+          <input name="name" placeholder="name" required />
+          <input name="amount" type="number" step="0.01" placeholder="amount" required />
+          <input name="category" placeholder="category" required />
+          <input name="start_key" placeholder="start_key (YYYY-MM)" required />
+          <input name="month_for_yearly" type="number" min="1" max="12" placeholder="month_for_yearly" />
+          <button type="submit">Add recurring</button>
+        </form>
+        <ul id="recurring-list"></ul>
+      </section>
+
+      <p id="status" class="status">Loading…</p>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="app.js"></script>
   </body>
 </html>
