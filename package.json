@@ -1,0 +1,9 @@
+{
+  "name": "expense-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static expense tracker hosted on GitHub Pages with Supabase backend",
+  "scripts": {
+    "lint": "node --check app.js && node --check config.js"
+  }
+}
